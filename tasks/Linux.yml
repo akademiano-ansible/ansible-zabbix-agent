@@ -26,18 +26,42 @@
     permissive: true
   become: yes
   when:
-    - zabbix_selinux
+    - zabbix_selinux | bool
+
+- name: "Adding zabbix group"
+  group:
+    name: zabbix
+    state: present
+    gid: "{{ zabbix_agent_docker_user_gid | default(omit) }}"
+  become: yes
+  when:
+    - zabbix_agent_docker | bool
+
+- name: "Adding zabbix user"
+  user:
+    name: zabbix
+    group: zabbix
+    state: present
+    create_home: False
+    home: /etc/zabbix
+    uid: "{{ zabbix_agent_docker_user_uid | default(omit) }}"
+    system: True
+  become: yes
+  when:
+    - zabbix_agent_docker | bool
 
 - name: "Configure zabbix-agent"
   template:
     src: zabbix_agentd.conf.j2
-    dest: /etc/zabbix/{{ zabbix_agent_conf }}
+    dest: "/etc/zabbix/{{ zabbix_agent_conf }}"
     owner: root
     group: root
     mode: 0644
   notify:
     - restart zabbix-agent
   become: yes
+  when:
+    - not (zabbix_agent_docker | bool)
   tags:
     - zabbix-agent
     - config
@@ -51,7 +75,6 @@
   become: yes
   when:
     - zabbix_agent_tlspskfile is defined
-    - zabbix_agent_tlspskfile != ''
 
 - name: "Place TLS PSK File"
   copy:
@@ -64,8 +87,8 @@
   when:
     - zabbix_agent_tlspskfile is defined
     - zabbix_agent_tlspsk_secret is defined
-    - zabbix_agent_tlspskfile != ''
-    - zabbix_agent_tlspsk_secret != ''
+  notify:
+    - restart zabbix-agent
 
 - name: "Create include dir zabbix-agent"
   file:
@@ -78,7 +101,12 @@
     - config
     - include
 
-- name: "Configure IPTables"
+- name: "Install the Docker container"
+  include: Docker.yml
+  when:
+    - zabbix_agent_docker | bool
+
+- name: "Configure IPTables (zabbix_agent_listenport)"
   iptables:
     destination_port: "{{ zabbix_agent_listenport }}"
     source: "{{ zabbix_agent_firewall_source | default(omit) }}"
@@ -86,15 +114,36 @@
     chain: INPUT
     jump: ACCEPT
   become: yes
-  when: zabbix_agent_firewall_enable
+  when: zabbix_agent_firewall_enable | bool
 
-- name: "Configure firewalld"
+- name: "Configure IPTables (zabbix_agent_jmx_listenport)"
+  iptables:
+    destination_port: "{{ zabbix_agent_listenport }}"
+    source: "{{ zabbix_agent_firewall_source | default(omit) }}"
+    protocol: tcp
+    chain: INPUT
+    jump: ACCEPT
+  become: yes
+  when: (zabbix_agent_firewall_enable  | bool) and (zabbix_agent_jmx_listenport | bool)
+
+- name: "Configure firewalld (zabbix_agent_listenport)"
   firewalld:
     rich_rule: 'rule family="ipv4" source address="{{ zabbix_agent_firewalld_source }}" port protocol="tcp" port="{{ zabbix_agent_listenport }}" accept'
     permanent: true
     state: enabled
   become: yes
-  when: zabbix_agent_firewalld_enable
+  when: zabbix_agent_firewalld_enable | bool
+  notify:
+    - firewalld-reload
+  tags: zabbix_agent_firewalld_enable
+
+- name: "Configure firewalld (zabbix_agent_jmx_listenport)"
+  firewalld:
+    rich_rule: 'rule family="ipv4" source address="{{ zabbix_agent_firewalld_source }}" port protocol="tcp" port="{{ zabbix_agent_jmx_listenport }}" accept'
+    permanent: true
+    state: enabled
+  become: yes
+  when: (zabbix_agent_firewalld_enable | bool) and (zabbix_agent_jmx_listenport | bool)
   notify:
     - firewalld-reload
   tags: zabbix_agent_firewalld_enable
@@ -105,6 +154,8 @@
     state: started
     enabled: yes
   become: yes
+  when:
+    - not (zabbix_agent_docker | bool)
   tags:
     - init
     - service

@@ -4,9 +4,42 @@ Below an overview of all changes in the releases.
 
 Version (Release date)
 
-x.x.x  (unreleased)
+UNRELEASED:
 
-  * 
+1.7.1  (2019-06-4)
+
+  * Revert breaking changes #232 (By pull request: crazikPL (Thanks!))
+
+1.7.0  (2019-05-30)
+
+  * Updated to Zabbix 4.2 to default installations #221
+  * Fixed for the default scenario the warnings #222
+  * Add Windows Agent update and service auto-recovery #223 (By pull request: pimooss (Thanks!))
+  * Added Docker image #224
+  * Add details on requiring sudo access for python-netaddr #226 (By pull request: willhallonline (Thanks!))
+  * Defining different jmx port number to configuring firewall #227 (By pull request: 0utsider (Thanks!))
+  * Update syntax to ansible 2.8 #228 (By pull request: crazikPL (Thanks!))
+  * Use EPEL 7 when Amazon 2 #230 (By pull request: bkmeneguello (Thanks!))
+
+1.6.1  (2019-04-12)
+
+  * Update userparameter.yml #215 (By pull request: Jookadin (Thanks!))
+  * Pip packages install variable #217 (By pull request: rnsc (Thanks!))
+  * Added task that was previously in role #219
+
+1.6.0  (2019-03-13)
+
+  * Added task for installation of the zabbix-api package #191
+  * Restart agent when PSK file changes (fixes #193) #194 (By pull request: pigulla (Thanks!))
+  * Added a until loop to retry installations as suggested by ansible-lint #195
+  * Add fedora 29 support #199 (By pull request: average-joe (Thanks!))
+  * Set default values if property is undefined #203
+  * Add installation of pip package netaddr #204
+  * Add option not to elevate privileges locally #206 (By pull request: dennisse (Thanks!))
+  * Windows zabbix agent handler #209 (By pull request: rnsc (Thanks!))
+  * Add Bionic to sign keys for zabbix-agent v3.0 and v3.2 #211 (By pull request: mamedin (Thanks!))
+  * Fix for: zabbix_agent_tlsconnect and zabbix_agent_tlsaccept are mixed #205
+  * Fix for: Role Should NOT Smash Ansible Facts #207
 
 1.5.0  (2018-10-19)
 

@@ -12,19 +12,17 @@ platforms:
     groups:
       - group1
     privileged: True
-  - name: zabbix-agent-debian-jessie
-    image: maint/debian-systemd:latest
+  - name: zabbix-agent-fedora
+    image: jrei/systemd-fedora:latest
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     groups:
       - group1
     privileged: True
   - name: zabbix-agent-debian-stretch
     image: minimum2scp/systemd-stretch:latest
     command: /sbin/init
-    groups:
-      - group1
-    privileged: True
-  - name: zabbix-agent-ubuntu-xenial
-    image: solita/ubuntu-systemd:xenial
     groups:
       - group1
     privileged: True
@@ -48,9 +46,12 @@ provisioner:
   lint:
     name: ansible-lint
   inventory:
+    host_vars:
+      zabbix-agent-fedora:
+        ansible_python_interpreter: /usr/bin/python3
     group_vars:
       all:
-        zabbix_version: 3.4
+        zabbix_version: 4.0
 
 scenario:
   name: before-last-version

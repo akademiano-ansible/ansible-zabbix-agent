@@ -1,25 +1,26 @@
 Table of Contents
 
 - [Overview](#overview)
-  * [Upgrade](#upgrade)
-    + [1.0.0](#100)
-    + [0.8.0](#080)
 - [Requirements](#requirements)
   * [Operating systems](#operating-systems)
+  * [Local system access](#local-system-access)
   * [Zabbix Versions](#zabbix-versions)
+    + [Zabbix 4.2](#zabbix-42)
     + [Zabbix 4.0](#zabbix-40)
     + [Zabbix 3.4](#zabbix-34)
     + [Zabbix 3.2](#zabbix-32)
     + [Zabbix 3.0](#zabbix-30)
     + [Zabbix 2.4](#zabbix-24)
     + [Zabbix 2.2](#zabbix-22)
-  * [Zabbix API](#zabbix-api)
-- [Installation](#installation)
+- [Getting started](#getting-started)
+  * [Installation](#installation)
+  * [Minimal Configuration](#minimal-configuration)
 - [Role Variables](#role-variables)
   * [Main variables](#main-variables)
   * [TLS Specific configuration](#tls-specific-configuration)
   * [Zabbix API variables](#zabbix-api-variables)
   * [Windows Variables](#windows-variables)
+  * [Docker Variables](#docker-variables)
   * [Other variables](#other-variables)
 - [Dependencies](#dependencies)
 - [Example Playbook](#example-playbook)
@@ -36,14 +37,14 @@ Table of Contents
 - [License](#license)
 - [Author Information](#author-information)
 
-
-# Overview
-
 Build Status:
 
 [![Build Status](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent.svg?branch=master)](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent)
 
-This is an role for installing and maintaining the zabbix-agent.
+# Introduction
+
+This is an role for installing and maintaining the zabbix-agent. It will install the Zabbix Agent on any host with an operating system that is defined [here](#operating-systems) or
+will install a Docker container and start that.
 
 This is one of the 'dj-wasabi' roles which configures your whole Zabbix environment. See an list for the complete list:
 
@@ -53,23 +54,12 @@ This is one of the 'dj-wasabi' roles which configures your whole Zabbix environm
  * zabbix-javagateway (https://galaxy.ansible.com/dj-wasabi/zabbix-javagateway/)
  * zabbix-agent (https://galaxy.ansible.com/dj-wasabi/zabbix-agent/)
 
-## Upgrade
-
-### 1.0.0
-
-With this 1.0.0 release, the following is changed:
-
-* All configuration properties starts with `zabbix_` now. Example, property named `agent_tlsaccept` is now `zabbix_agent_tlsaccept`.
-
-### 0.8.0
-
-As of version 0.8.0, the property `zabbix_api_use` isn't available anymore. It is replaced by the properties `zabbix_api_create_hostgroup` and `zabbix_api_create_hosts`
-
 # Requirements
 ## Operating systems
 This role will work on the following operating systems:
 
  * Red Hat
+ * Fedora
  * Debian
  * Ubuntu
  * opensuse
@@ -78,15 +68,31 @@ This role will work on the following operating systems:
 So, you'll need one of those operating systems.. :-)
 Please sent Pull Requests or suggestions when you want to use this role for other Operating systems.
 
+## Local system access
+
+To successfully complete the install the role requires `python-netaddr` on the controller to be able to manage IP addresses. This requires that the library is available on your local machine (or that `pip` is installed to be able to run). This will likely mean that running the role will require `sudo` access to your local machine and therefore you may need the `-K` flag to be able to enter your local machine password if you are not running under root.
+
 ## Zabbix Versions
 
 See the following list of supported Operating systems with the Zabbix releases:
+
+### Zabbix 4.2
+
+  * CentOS 7.x
+  * Amazon 7.x
+  * RedHat 7.x
+  * Fedora 27, 29
+  * OracleLinux 7.x
+  * Scientific Linux 7.x
+  * Ubuntu 14.04, 16.04, 18.04
+  * Debian 8, 9
 
 ### Zabbix 4.0
 
   * CentOS 7.x
   * Amazon 7.x
   * RedHat 7.x
+  * Fedora 27, 29
   * OracleLinux 7.x
   * Scientific Linux 7.x
   * Ubuntu 14.04, 16.04, 18.04
@@ -97,6 +103,7 @@ See the following list of supported Operating systems with the Zabbix releases:
   * CentOS 7.x
   * Amazon 7.x
   * RedHat 7.x
+  * Fedora 27, 29
   * OracleLinux 7.x
   * Scientific Linux 7.x
   * Ubuntu 14.04, 16.04, 18.04
@@ -107,6 +114,7 @@ See the following list of supported Operating systems with the Zabbix releases:
   * CentOS 7.x
   * Amazon 7.x
   * RedHat 7.x
+  * Fedora 27, 29
   * OracleLinux 7.x
   * Scientific Linux 7.x
   * Ubuntu 14.04, 16.04
@@ -142,28 +150,37 @@ See the following list of supported Operating systems with the Zabbix releases:
   * Debian 7
   * xenserver 6
 
+# Getting started
 
-## Zabbix API
-
-When you want to automatically create the hosts in the webinterface, you'll need on your own machine the zabbix-api package.
-
-You can install this locally with the following command: `pip install zabbix-api`.
-
-# Installation
+## Installation
 
 Installing this role is very simple: `ansible-galaxy install dj-wasabi.zabbix-agent`
+
+This will install the zabbix-agent role into your `roles` directory.
+
+## Minimal Configuration
+
+In order to get the Zabbix Agent running, you'll have to define the following properties before executing the role:
+
+* zabbix_version
+* zabbix_agent_server
+* zabbix_agent_serveractive (When using active checks)
+
+The `zabbix_version` is optional. The latest available major.minor version of Zabbix will be installed on the host(s). If you want to use an older version, please specify this in the major.minor format. Example: `zabbix_version: 4.0`, `zabbix_version: 3.4` or `zabbix_version: 2.2`.
+
+The `zabbix_agent_server` (and `zabbix_agent_serveractive`) should contain the ip or fqdn of the host running the Zabbix Server.
 
 # Role Variables
 
 ## Main variables
 
-There are some variables in de default/main.yml which can (Or needs to) be changed/overriden:
+There are some variables in de default/main.yml which can (Or needs to) be overridden:
 
-* `zabbix_agent_server`: The ipaddress for the zabbix-server or zabbix-proxy.
+* `zabbix_agent_server`: The ip address for the zabbix-server or zabbix-proxy.
 
 * `zabbix_agent_serveractive`: The ipaddress for the zabbix-server or zabbix-proxy for active checks.
 
-* `zabbix_version`: This is the version of zabbix. Default it is 3.2, but can be overriden to 3.0, 2.4, 2.2 or 2.0.
+* `zabbix_version`: This is the version of zabbix. Default it is 4.0, but can be overridden to one of the versions mentioned in [Zabbix Versions](#zabbix-versions).
 
 * `zabbix_repo`: Default: _zabbix_
   * _epel_ install agent from EPEL repo
@@ -171,6 +188,12 @@ There are some variables in de default/main.yml which can (Or needs to) be chang
   * _other_ install agent from pre-existing or other repo
 
 * `zabbix_agent_listeninterface`: Interface zabbix-agent listens on. Leave blank for all.
+
+* `zabbix_agent_package`: The name of the zabbix-agent package. Default: `zabbix-agent`. In case for EPEL, it is automatically renamed.
+
+* `zabbix_sender_package`: The name of the zabbix-sender package. Default: `zabbix-sender`. In case for EPEL, it is automatically renamed.
+
+* `zabbix_get_package`: The name of the zabbix-get package. Default: `zabbix-get`. In case for EPEL, it is automatically renamed.
 
 * `zabbix_agent_package_state`: If Zabbix-agent needs to be present or latest.
 
@@ -185,6 +208,10 @@ There are some variables in de default/main.yml which can (Or needs to) be chang
 * `zabbix_agent_allowroot`: Allow the agent to run as 'root'. 0 - do not allow, 1 - allow
 
 * `zabbix_agent_runas_user`: Drop privileges to a specific, existing user on the system. Only has effect if run as 'root' and AllowRoot is disabled.
+
+* `zabbix_agent_become_on_localhost`: Set to `False` if you don't need to elevate privileges on localhost to install packages locally with pip. Default: True
+
+* `zabbix_install_pip_packages`: Set to `False` if you don't want to install the required pip packages. Useful when you control your environment completely. Default: True
 
 ## TLS Specific configuration
 
@@ -220,15 +247,21 @@ These variables are specific for Zabbix 3.0 and higher:
 
 * `zabbix_agent_tlspskidentity`: Unique, case sensitive string used to identify the pre-shared key.
 
+* `zabbix_agent_tlspskidentity_file`: Full pathname of a file containing the pre-shared key identity.
+
 * `zabbix_agent_tlspskfile`: Full pathname of a file containing the pre-shared key.
 
 * `zabbix_agent_tlspsk_secret`: The pre-shared secret key that should be placed in the file configured with `agent_tlspskfile`.
 
+* `zabbix_agent_tlspsk_auto`: Enables auto generation and storing of individual pre-shared keys and identities on clients.
+
 ## Zabbix API variables
 
-These variables needs to be changed/overriden when you want to make use of the zabbix-api for automatically creating and or updating hosts. 
+These variables needs to be overridden when you want to make use of the zabbix-api for automatically creating and or updating hosts.
 
 Host encryption configuration will be set to match agent configuration.
+
+When `zabbix_api_create_hostgroup` or `zabbix_api_create_hosts` is set to `True`, it will install on the host executing the Ansible playbook the `zabbix-api` python module.
 
 * `zabbix_url`: The url on which the Zabbix webpage is available. Example: http://zabbix.example.com
 
@@ -268,7 +301,7 @@ Host encryption configuration will be set to match agent configuration.
 
 _Supporting Windows is an best effort (I don't have the possibility to either test/verify changes on the various amount of available Windows instances). PR's specific to Windows will almost immediately be merged, unless some one is able to provide a Windows test mechanism via Travis for Pull Requests._
 
-* `zabbix_version_long`: The long (major.minor.patch) version of the Zabbix Agent. This will be used with the `zabbix_win_download_link` link. If `zabbix_win_download_link` is provided, then there is no need to configure this property.
+* `zabbix_version_long`: The long (major.minor.patch) version of the Zabbix Agent. This will be used to generate the `zabbix_win_download_link` link and for Zabbix Agent update if `zabbix_agent_package_state: latest`.
 
 * `zabbix_win_download_link`: The download url to the `win.zip` file.
 
@@ -278,13 +311,61 @@ _Supporting Windows is an best effort (I don't have the possibility to either te
 
 * `zabbix_agent_win_include`: The directory in which the Zabbix specific configuration files are stored.
 
+* `zabbix_agent_win_svc_recovery`: Enable Zabbix Agent service auto-recovery settings.
+
+## Docker Variables
+
+When you don't want to install the Zabbix Agent on the host, but would like to run it in a container then these properties are useful. When `zabbix_agent_docker` is set to `True`, then a
+Docker image will be downloaded and a Container will be started. No other installations will be done on the host, with the excetion of the PSK file and the "Zabbix Include Directory".
+
+The following directories are mounted in the Container:
+
+```
+  - /etc/zabbix/zabbix_agentd.d:/etc/zabbix/zabbix_agentd.d
+  - /:/hostfs:ro
+  - /etc:/hostfs/etc:ro
+  - /proc:/hostfs/proc:ro
+  - /sys:/hostfs/sys:ro
+  - /var/run:/var/run
+```
+
+Keep in mind that using the Zabbix Agent in a Container, requires changes to the Zabbix Template for Linux as `/proc`, `/sys` and `/etc` are mounted in a directory `/hostfs`.
+
+* `zabbix_agent_docker`: When set to `True`, it will install a Docker container on the target host instead of installation on the target. Default: `False`
+
+* `zabbix_agent_docker_state`: Default: `started`
+
+* `zabbix_agent_docker_name`: The name of the Container. Default: `zabbix-agent`
+
+* `zabbix_agent_docker_image`: The name of the Docker image. Default: `zabbix/zabbix-agent`
+
+* `zabbix_agent_docker_image_tag`: The tag of the Docker image.
+
+* `zabbix_agent_docker_user_gid`: The group id of the zabbix user in the Container.
+
+* `zabbix_agent_docker_user_uid`: The user id of the zabbix user in the Container.
+
+* `zabbix_agent_docker_network_mode`: The name of the (Docker) network that should be used for the Container. Default `host`.
+
+* `zabbix_agent_docker_restart_policy`: The restart policy of the Container. Default: `unless-stopped`
+
+* `zabbix_agent_docker_privileged`: When set to `True`, the container is running in privileged mode.
+
+* `zabbix_agent_docker_ports`: A list with `<PORT>:<PORT>` values to open ports to the container.
+
+* `zabbix_agent_docker_security_opts`: A list with available security options.
+
+* `zabbix_agent_docker_volumes`: A list with all directories that needs to be available in the Container.
+
+* `zabbix_agent_docker_env`: A dict with all environment variables that needs to be set for the Container.
+
 ## Other variables
 
 * `zabbix_agent_firewall_enable`: If IPtables needs to be updated by opening an TCP port for port configured in `zabbix_agent_listenport`.
 
 * `zabbix_agent_firewall_source`: When provided, IPtables will be configuring to only allow traffic from this IP address/range.
 
-* `zabbix_agent_firewalld_enable`: If firewalld needs to be updated by opening an TCP port for port configured in `zabbix_agent_listenport`.
+* `zabbix_agent_firewalld_enable`: If firewalld needs to be updated by opening an TCP port for port configured in `zabbix_agent_listenport` and `zabbix_agent_jmx_listenport` if defined.
 
 * `zabbix_agent_firewalld_source`: When provided, firewalld will be configuring to only allow traffic for IP configured in `zabbix_agent_server`.
 

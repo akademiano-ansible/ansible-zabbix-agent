@@ -1,27 +1,30 @@
 ---
-# tasks file for wdijkerman.zabbix
+# tasks file for dj-wasabi.zabbix-agent
 
 - name: "Fix facts for linuxmint - distribution release"
   set_fact:
-    ansible_distribution_release: xenial
+    zabbix_agent_distribution_release: xenial
   when:
     - ansible_os_family == "Linuxmint"
     - ansible_distribution_release == "sonya" or ansible_distribution_release == "serena"
 
 - name: "Fix facts for linuxmint - family"
   set_fact:
-    ansible_os_family: Debian
-  when: ansible_os_family == "Linuxmint"
+    zabbix_agent_os_family: Debian
+  when:
+    - ansible_os_family == "Linuxmint"
 
 - name: "Include OS-specific variables"
-  include_vars: "{{ ansible_os_family }}.yml"
+  include_vars: "{{ zabbix_agent_os_family }}.yml"
   tags:
+    - vars
     - zabbix-agent
 
 - name: "Install the correct repository"
   include: "RedHat.yml"
   when:
-    - ansible_os_family == "RedHat"
+    - zabbix_agent_os_family == "RedHat"
+    - not (zabbix_agent_docker | bool)
   tags:
     - zabbix-agent
     - init
@@ -31,7 +34,8 @@
 - name: "Install the correct repository"
   include: "Debian.yml"
   when:
-    - ansible_os_family == "Debian"
+    - zabbix_agent_os_family == "Debian"
+    - not (zabbix_agent_docker | bool)
   tags:
     - zabbix-agent
     - init
@@ -41,12 +45,25 @@
 - name: "Install the correct repository"
   include: "Suse.yml"
   when:
-    - ansible_os_family == "Suse"
+    - zabbix_agent_os_family == "Suse"
+    - not (zabbix_agent_docker | bool)
   tags:
     - zabbix-agent
     - init
     - config
     - service
+
+- name: "Install local python-netaddr package"
+  pip:
+    name: netaddr
+    state: present
+  register: zabbix_python_netaddr_package_installed
+  until: zabbix_python_netaddr_package_installed is succeeded
+  delegate_to: localhost
+  become: "{{ zabbix_agent_become_on_localhost }}"
+  when:
+    - zabbix_install_pip_packages | bool
+    - ansible_all_ipv4_addresses is defined or (zabbix_agent_ip is not defined and total_private_ip_addresses is defined)
 
 - name: "Set default ip address for zabbix_agent_ip"
   set_fact:
@@ -54,6 +71,30 @@
   when:
     - zabbix_agent_ip is not defined
     - "'ansible_default_ipv4' in hostvars[inventory_hostname]"
+
+- name: "Get Total Private IP Addresses"
+  set_fact:
+    total_private_ip_addresses: "{{ ansible_all_ipv4_addresses | ipaddr('private') | length }}"
+  when:
+    - ansible_all_ipv4_addresses is defined
+
+- name: "Set first public ip address for zabbix_agent_ip"
+  set_fact:
+    zabbix_agent_ip: "{{ ansible_all_ipv4_addresses | ipaddr('public') | first }}"
+    zabbix_agent_server: "{{ zabbix_agent_server_public_ip | default(zabbix_agent_server) }}"
+    zabbix_agent_serveractive: "{{ zabbix_agent_serveractive_public_ip | default(zabbix_agent_serveractive) }}"
+  when:
+    - zabbix_agent_ip is not defined
+    - total_private_ip_addresses is defined
+    - total_private_ip_addresses == '0'
+
+- name: "Set first private ip address for zabbix_agent_ip"
+  set_fact:
+    zabbix_agent_ip: "{{ ansible_all_ipv4_addresses | ipaddr('private') | first }}"
+  when:
+    - zabbix_agent_ip is not defined
+    - total_private_ip_addresses is defined
+    - total_private_ip_addresses != '0'
 
 - name: "Fail invalid specified agent_listeninterface"
   fail:
@@ -65,10 +106,17 @@
     - zabbix-agent
     - config
 
+- name: "Set network interface"
+  set_fact:
+    network_interface: ansible_{{ zabbix_agent_listeninterface }}
+  when:
+    - zabbix_agent_listeninterface
+    - not zabbix_agent_listenip
+
 - name: "Get IP of agent_listeninterface when no agent_listenip specified"
   set_fact:
-    zabbix_agent_listenip: "{{ hostvars[inventory_hostname]['ansible_' + zabbix_agent_listeninterface]['ipv4'].address | default('0.0.0.0') }}"
-    zabbix_agent_ip: "{{ hostvars[inventory_hostname]['ansible_' + zabbix_agent_listeninterface]['ipv4'].address | default('0.0.0.0') }}"
+    zabbix_agent_listenip: "{{ hostvars[inventory_hostname][network_interface]['ipv4'].address | default('0.0.0.0') }}"
+    zabbix_agent_ip: "{{ hostvars[inventory_hostname][network_interface]['ipv4'].address | default('0.0.0.0') }}"
   when:
     - zabbix_agent_listeninterface
     - not zabbix_agent_listenip
@@ -97,17 +145,37 @@
     - zabbix-agent
     - config
 
+- name: "Encrypt with TLS PSK auto management"
+  include_tasks: tlspsk_auto.yml
+  when:
+    - zabbix_agent_tlspsk_auto | bool
+    - (zabbix_agent_tlspskfile is undefined) or (zabbix_agent_tlspskfile | length == '0')
+    - (zabbix_agent_tlspsk_secret is undefined) or (zabbix_agent_tlspsk_secret | length == '0')
+
 - name: "Install the correct repository"
   include: Windows.yml
-  when: ansible_os_family == "Windows"
+  when:
+    - zabbix_agent_os_family == "Windows"
 
 - name: "Install the correct repository"
   include: Linux.yml
-  when: ansible_os_family != "Windows"
+  when:
+    - (zabbix_agent_os_family != "Windows") or (zabbix_agent_docker | bool)
+
+- name: "Installing the Zabbix-api package on localhost"
+  pip:
+    name: zabbix-api
+    state: present
+  register: zabbix_api_package_installed
+  until: zabbix_api_package_installed is succeeded
+  delegate_to: localhost
+  become: "{{ zabbix_agent_become_on_localhost }}"
+  when:
+    - zabbix_install_pip_packages | bool
+    - (zabbix_api_create_hostgroup | bool) or (zabbix_api_create_hosts | bool)
 
 - name: "Create hostgroups"
-  local_action:
-    module: zabbix_group
+  zabbix_group:
     server_url: "{{ zabbix_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
@@ -115,14 +183,14 @@
     state: "{{ zabbix_create_hostgroup }}"
     validate_certs: "{{ zabbix_validate_certs|default(omit) }}"
   when:
-    - zabbix_api_create_hostgroup
+    - zabbix_api_create_hostgroup | bool
+  delegate_to: localhost
   become: no
   tags:
     - api
 
 - name: "Create a new host or update an existing host's info"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
@@ -140,19 +208,19 @@
     tls_psk_identity: "{{ zabbix_agent_tlspskidentity|default(omit) }}"
     tls_issuer: "{{ zabbix_agent_tlsservercertissuer|default(omit) }}"
     tls_subject: "{{ zabbix_agent_tlsservercertsubject|default(omit) }}"
-    tls_connect: "{{ {'unencrypted': '1', 'psk': '2', 'cert' : '4'}[zabbix_agent_tlsaccept if zabbix_agent_tlsaccept else 'unencrypted'] }}"
-    tls_accept: "{{ {'unencrypted': '1', 'psk': '2', 'cert' : '4'}[zabbix_agent_tlsconnect if zabbix_agent_tlsconnect else 'unencrypted'] }}"
+    tls_accept: "{{ zabbix_agent_tls_config[zabbix_agent_tlsaccept if zabbix_agent_tlsaccept else 'unencrypted'] }}"
+    tls_connect: "{{ zabbix_agent_tls_config[zabbix_agent_tlsconnect if zabbix_agent_tlsconnect else 'unencrypted'] }}"
     validate_certs: "{{ zabbix_validate_certs|default(omit) }}"
   when:
-    - zabbix_api_create_hosts
+    - zabbix_api_create_hosts | bool
+  delegate_to: localhost
   become: no
   changed_when: false
   tags:
     - api
 
 - name: "Updating host configuration with macros"
-  local_action:
-    module: zabbix_hostmacro
+  zabbix_hostmacro:
     server_url: "{{ zabbix_url }}"
     login_user: "{{ zabbix_api_user }}"
     login_password: "{{ zabbix_api_pass }}"
@@ -162,8 +230,10 @@
     validate_certs: "{{ zabbix_validate_certs|default(omit) }}"
   with_items: "{{ zabbix_macros | default([]) }}"
   when:
+    - zabbix_api_create_hosts | bool
     - zabbix_macros is defined
     - item.macro_key is defined
+  delegate_to: localhost
   become: no
   tags:
     - api
