@@ -1,7 +1,7 @@
 ---
 # defaults file for zabbix-agent
 
-zabbix_version: 4.2
+zabbix_version: 4.4
 zabbix_version_patch: 0
 zabbix_repo: zabbix
 zabbix_agent_package: zabbix-agent
@@ -40,6 +40,8 @@ zabbix_repo_yum:
 
 # Zabbix API stuff
 zabbix_url: "http://zabbix.dj-wasabi.local"
+# zabbix_api_http_user: admin
+# zabbix_api_http_password: admin
 zabbix_api_user: Admin
 zabbix_api_pass: zabbix
 zabbix_api_create_hostgroup: False
@@ -54,7 +56,7 @@ zabbix_useuip: 1
 zabbix_host_groups:
   - Linux servers
 zabbix_link_templates:
-  - Template OS Linux
+  - Template OS Linux by Zabbix agent
 
 zabbix_agent_interfaces:
   - type: 1
@@ -67,6 +69,11 @@ zabbix_agent_interfaces:
 zabbix_agent_firewall_enable: False
 zabbix_agent_firewalld_enable: False
 zabbix_agent_firewalld_source: "{{ zabbix_agent_server }}"
+zabbix_agent_firewall_action: insert
+zabbix_agent_firewall_chain: INPUT
+
+# By default, a null zone will trigger the use of the default zone on the remote host
+zabbix_agent_firewalld_zone:
 # Zabbix configuration variables
 zabbix_agent_pidfile: /var/run/zabbix/zabbix_agentd.pid
 zabbix_agent_logfile: /var/log/zabbix/zabbix_agentd.log
@@ -93,8 +100,9 @@ zabbix_agent_zabbix_alias:
 zabbix_agent_timeout: 3
 zabbix_agent_include: /etc/zabbix/zabbix_agentd.d
 zabbix_agent_unsafeuserparameters: 0
-zabbix_agent_userparameter:
 zabbix_agent_userparameters: []
+zabbix_agent_userparameters_templates_src: "userparameters"
+zabbix_agent_userparameters_scripts_src: "scripts"
 zabbix_agent_custom_scripts: false
 zabbix_agent_loadmodulepath: ${libdir}/modules
 zabbix_agent_loadmodule:
@@ -117,8 +125,10 @@ zabbix_agent_tls_config:
   psk: '2'
   cert: '4'
 
+# Windows/macOS Related
+zabbix_version_long: 4.4.4
+
 # Windows Related
-zabbix_version_long: 4.2.0
 zabbix_win_package: zabbix_agents_{{ zabbix_version_long }}.win.zip
 zabbix_win_download_url: https://www.zabbix.com/downloads
 zabbix_win_download_link: "{{ zabbix_win_download_url }}/{{ zabbix_version_long }}/{{ zabbix_win_package }}"
@@ -126,6 +136,11 @@ zabbix_win_install_dir: 'C:\Zabbix'
 zabbix_agent_win_logfile: 'C:\Zabbix\zabbix_agentd.log'
 zabbix_agent_win_include: 'C:\Zabbix\zabbix_agent.d\'
 zabbix_agent_win_svc_recovery: True
+
+# macOS Related
+zabbix_mac_package: zabbix_agent-{{ zabbix_version_long }}-macos-amd64-openssl.pkg
+zabbix_mac_download_url: https://www.zabbix.com/downloads
+zabbix_mac_download_link: "{{ zabbix_mac_download_url }}/{{ zabbix_version_long }}/{{ zabbix_mac_package }}"
 
 # Zabbix Agent Docker facts
 zabbix_agent_docker: False

@@ -6,7 +6,41 @@ Version (Release date)
 
 UNRELEASED:
 
-1.7.1  (2019-06-4)
+2.1.0  (2019-11-25)
+
+  * Fix typos #274 (By pull request: akamch (Thanks!))
+  * Added retry for API related tasks #275
+  * Added missing task for adding a TLS-PSK file #280
+  * Remove the host running Docker from Molecule for now #281
+  * Updating to Zabbix 4.4 #282
+  * Trying to use a Matrix in Travis and see what happens.. :-)
+  * Pass params to Ansible Zabbix modules used by role to allow HTTP Basi… #285 (By pull request: nadley (Thanks!))
+  * RHEL8 specific changes for SELinux #286 (By pull request: bdekker-routit (Thanks!))
+  * userparameters from parametizable sources #287 (By pull request: santiagomr (Thanks!))
+  * Added cosmic to the zabbix.yml vars file.
+
+2.0.0  (2019-09-29)
+
+  * Using Ansible 2.7 as minimal version;
+  * fix repository problem #236 (By pull request: kmonticolo (Thanks!))
+  * Added ansible_python_interpreter for Fedora #238
+  * Allow to use a (http|https) proxy for downloading of packages #239
+  * fix repository problem #240 (By pull request: kmonticolo (Thanks!))
+  * Add Debian 10 (buster) for Zabbix 4.2,4.0 and 3.0 #243 (By pull request: patede (Thanks!))
+  * Add "vars" tag to include variables #247 (By pull request: j8r (Thanks!))
+  * Introduce AutoPSK for easy encryption; Closes dj-wasabi/ansible-zabbix-agent#250 #251 (By pull request: kr4ut (Thanks!))
+  * Install selinux-policy-targeted (dependency) #255 (By pull request: Maelstrom96 (Thanks!))
+  * Add support to FreePBX #261 (By pull request: darco1991 (Thanks!))
+  * Add support for firewalld zone #262 (By pull request: darco1991 (Thanks!))
+  * Fix group membership zabbix_agent.d dir according to #246 #264
+  * According to #263 1100 needs to be added to the sc.exe call #265
+  * Changing gpg keys #267
+  * Added suggested task for correct installation of Zabbix on Amazon #270
+  * Added some properties for configuring iptables #271
+  * Bare variable deprecation #272 (By pull request: average-joe (Thanks!))
+  * Moving zabbix_agent_ip to Linux.yml and create a new one for Windows.yml #268
+
+1.7.1  (2019-06-04)
 
   * Revert breaking changes #232 (By pull request: crazikPL (Thanks!))
 

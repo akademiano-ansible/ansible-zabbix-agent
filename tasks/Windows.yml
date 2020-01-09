@@ -1,5 +1,12 @@
 ---
 
+- name: "Set default ip address for zabbix_agent_ip"
+  set_fact:
+    zabbix_agent_ip: "{{ hostvars[inventory_hostname]['ansible_ip_addresses'][0] }}"
+  when:
+    - zabbix_agent_ip is not defined
+    - "'ansible_ip_addresses' in hostvars[inventory_hostname]"
+
 - name: "Windows | Set default architecture"
   set_fact:
     windows_arch: 32
@@ -47,6 +54,15 @@
     - zabbix_win_exe_info.win_file_version.product_version is version(zabbix_version_long, '<')
     - zabbix_agent_package_state == 'latest'
 
+- name: "Windows | Place TLS-PSK file"
+  win_copy:
+    content: "{{ zabbix_agent_tlspsk_secret }}"
+    dest: "{{ zabbix_agent_tlspskfile }}"
+  when:
+    - zabbix_agent_tlspskfile is defined
+    - zabbix_agent_tlspsk_secret is defined
+  notify: restart win zabbix agent
+
 - name: "Windows | Stop Zabbix (Update)"
   win_service:
     name: Zabbix Agent
@@ -89,6 +105,10 @@
     url: "{{ zabbix_win_download_link }}"
     dest: '{{ zabbix_win_install_dir }}\{{ zabbix_win_package }}'
     force: False
+    follow_redirects: all
+  environment:
+    http_proxy: "{{ zabbix_http_proxy | default(None) | default(omit) }}"
+    https_proxy: "{{ zabbix_https_proxy | default(None) | default(omit) }}"
   register: zabbix_agent_win_download_zip
   until: zabbix_agent_win_download_zip is succeeded
 
@@ -123,7 +143,7 @@
     state: started
 
 - name: "Windows | Getting Zabbix Service Recovery Settings"
-  win_shell: sc.exe qfailure "Zabbix Agent"
+  win_shell: sc.exe qfailure "Zabbix Agent" 1100
   register: svc_recovery
   changed_when: false
   when: zabbix_agent_win_svc_recovery

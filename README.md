@@ -5,6 +5,7 @@ Table of Contents
   * [Operating systems](#operating-systems)
   * [Local system access](#local-system-access)
   * [Zabbix Versions](#zabbix-versions)
+    + [Zabbix 4.4](#zabbix-44)
     + [Zabbix 4.2](#zabbix-42)
     + [Zabbix 4.0](#zabbix-40)
     + [Zabbix 3.4](#zabbix-34)
@@ -15,6 +16,7 @@ Table of Contents
 - [Getting started](#getting-started)
   * [Installation](#installation)
   * [Minimal Configuration](#minimal-configuration)
+  * [Issues](#issues)
 - [Role Variables](#role-variables)
   * [Main variables](#main-variables)
   * [TLS Specific configuration](#tls-specific-configuration)
@@ -22,6 +24,7 @@ Table of Contents
   * [Windows Variables](#windows-variables)
   * [Docker Variables](#docker-variables)
   * [Other variables](#other-variables)
+  * [proxy](#proxy)
 - [Dependencies](#dependencies)
 - [Example Playbook](#example-playbook)
   * [agent_interfaces](#agent-interfaces)
@@ -37,16 +40,16 @@ Table of Contents
 - [License](#license)
 - [Author Information](#author-information)
 
-Build Status:
+Badges:
 
-[![Build Status](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent.svg?branch=master)](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent)
+[![Build Status](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent.svg?branch=master)](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent) <img src="https://img.shields.io/ansible/role/d/2079"/> <img src="https://img.shields.io/ansible/quality/2079"/>
 
 # Introduction
 
-This is an role for installing and maintaining the zabbix-agent. It will install the Zabbix Agent on any host with an operating system that is defined [here](#operating-systems) or
+This is a role for installing and maintaining the zabbix-agent. It will install the Zabbix Agent on any host with an operating system that is defined [here](#operating-systems) or
 will install a Docker container and start that.
 
-This is one of the 'dj-wasabi' roles which configures your whole Zabbix environment. See an list for the complete list:
+This is one of the 'dj-wasabi' roles which configure your whole Zabbix environment. See the complete list:
 
  * zabbix-server (https://galaxy.ansible.com/dj-wasabi/zabbix-server/)
  * zabbix-web (https://galaxy.ansible.com/dj-wasabi/zabbix-web/)
@@ -64,6 +67,7 @@ This role will work on the following operating systems:
  * Ubuntu
  * opensuse
  * Windows (Best effort)
+ * macOS
 
 So, you'll need one of those operating systems.. :-)
 Please sent Pull Requests or suggestions when you want to use this role for other Operating systems.
@@ -76,6 +80,18 @@ To successfully complete the install the role requires `python-netaddr` on the c
 
 See the following list of supported Operating systems with the Zabbix releases:
 
+### Zabbix 4.4
+
+  * CentOS 7.x, 8.x
+  * Amazon 7.x
+  * RedHat 7.x, 8.x
+  * Fedora 27, 29
+  * OracleLinux 7.x, 8.x
+  * Scientific Linux 7.x, 8.x
+  * Ubuntu 14.04, 16.04, 18.04
+  * Debian 8, 9, 10
+  * macOS 10.14, 10.15
+
 ### Zabbix 4.2
 
   * CentOS 7.x
@@ -85,7 +101,8 @@ See the following list of supported Operating systems with the Zabbix releases:
   * OracleLinux 7.x
   * Scientific Linux 7.x
   * Ubuntu 14.04, 16.04, 18.04
-  * Debian 8, 9
+  * Debian 8, 9, 10
+  * macOS 10.14, 10.15
 
 ### Zabbix 4.0
 
@@ -96,7 +113,8 @@ See the following list of supported Operating systems with the Zabbix releases:
   * OracleLinux 7.x
   * Scientific Linux 7.x
   * Ubuntu 14.04, 16.04, 18.04
-  * Debian 8, 9
+  * Debian 8, 9, 10
+  * macOS 10.14, 10.15
 
 ### Zabbix 3.4
 
@@ -170,15 +188,19 @@ The `zabbix_version` is optional. The latest available major.minor version of Za
 
 The `zabbix_agent_server` (and `zabbix_agent_serveractive`) should contain the ip or fqdn of the host running the Zabbix Server.
 
+## Issues
+
+Due to issue discussed on [#291](https://github.com/dj-wasabi/ansible-zabbix-agent/issues/291), the Ansible Version 2.9.{0,1,2} isn't working correctly on Windows related targets.
+
 # Role Variables
 
 ## Main variables
 
-There are some variables in de default/main.yml which can (Or needs to) be overridden:
+There are some variables in default/main.yml which can (or need to) be overridden:
 
 * `zabbix_agent_server`: The ip address for the zabbix-server or zabbix-proxy.
 
-* `zabbix_agent_serveractive`: The ipaddress for the zabbix-server or zabbix-proxy for active checks.
+* `zabbix_agent_serveractive`: The ip address for the zabbix-server or zabbix-proxy for active checks.
 
 * `zabbix_version`: This is the version of zabbix. Default it is 4.0, but can be overridden to one of the versions mentioned in [Zabbix Versions](#zabbix-versions).
 
@@ -204,6 +226,10 @@ There are some variables in de default/main.yml which can (Or needs to) be overr
 * `zabbix_agent_userparameters`: List of userparameter names and scripts (if any). Detailed description is given in the [Deploying Userparameters](#deploying-userparameters) section. Default: `[]` (Empty list).
     * `name`: Userparameter name (should be the same with userparameter template file name)
     * `scripts_dir`: Directory name of the custom scripts needed for userparameters
+
+* `zabbix_agent_userparameters_templates_src`: indicates the relative path (from `templates/`) where userparameter templates are searched
+
+* `zabbix_agent_userparameters_scripts_src`: indicates the relative path (from `files/`) where userparameter scripts are searched
 
 * `zabbix_agent_allowroot`: Allow the agent to run as 'root'. 0 - do not allow, 1 - allow
 
@@ -257,13 +283,16 @@ These variables are specific for Zabbix 3.0 and higher:
 
 ## Zabbix API variables
 
-These variables needs to be overridden when you want to make use of the zabbix-api for automatically creating and or updating hosts.
+These variables need to be overridden when you want to make use of the zabbix-api for automatically creating and or updating hosts.
 
 Host encryption configuration will be set to match agent configuration.
 
 When `zabbix_api_create_hostgroup` or `zabbix_api_create_hosts` is set to `True`, it will install on the host executing the Ansible playbook the `zabbix-api` python module.
 
 * `zabbix_url`: The url on which the Zabbix webpage is available. Example: http://zabbix.example.com
+
+* `zabbix_api_http_user`: The http user to access zabbix url with Basic Auth
+* `zabbix_api_http_password`: The http password to access zabbix url with Basic Auth
 
 * `zabbix_api_create_hosts`: When you want to enable the Zabbix API to create/delete the host. This has to be set to `True` if you want to make use of `zabbix_create_host`. Default: `False`
 
@@ -283,11 +312,11 @@ When `zabbix_api_create_hostgroup` or `zabbix_api_create_hosts` is set to `True`
 
 * `zabbix_useuip`: 1 if connection to zabbix-agent is made via ip, 0 for fqdn.
 
-* `zabbix_host_groups`: An list of hostgroups which this host belongs to.
+* `zabbix_host_groups`: A list of hostgroups which this host belongs to.
 
-* `zabbix_link_templates`: An list of templates which needs to be link to this host. The templates should exist.
+* `zabbix_link_templates`: A list of templates which needs to be link to this host. The templates should exist.
 
-* `zabbix_macros`: An list with macro_key and macro_value for creating hostmacro's.
+* `zabbix_macros`: A list with macro_key and macro_value for creating hostmacro's.
 
 * `zabbix_inventory_mode`: Configure Zabbix inventory mode. Needed for building inventory data, manually when configuring a host or automatically by using some automatic population options. This has to be set to `automatic` if you want to make automatically building inventory data.
 
@@ -299,7 +328,7 @@ When `zabbix_api_create_hostgroup` or `zabbix_api_create_hosts` is set to `True`
 
 **NOTE**
 
-_Supporting Windows is an best effort (I don't have the possibility to either test/verify changes on the various amount of available Windows instances). PR's specific to Windows will almost immediately be merged, unless some one is able to provide a Windows test mechanism via Travis for Pull Requests._
+_Supporting Windows is a best effort (I don't have the possibility to either test/verify changes on the various amount of available Windows instances). PRs specific to Windows will almost immediately be merged, unless someone is able to provide a Windows test mechanism via Travis for Pull Requests._
 
 * `zabbix_version_long`: The long (major.minor.patch) version of the Zabbix Agent. This will be used to generate the `zabbix_win_download_link` link and for Zabbix Agent update if `zabbix_agent_package_state: latest`.
 
@@ -313,10 +342,16 @@ _Supporting Windows is an best effort (I don't have the possibility to either te
 
 * `zabbix_agent_win_svc_recovery`: Enable Zabbix Agent service auto-recovery settings.
 
+## macOS Variables
+
+* `zabbix_version_long`: The long (major.minor.patch) version of the Zabbix Agent. This will be used to generate the `zabbix_mac_download_link` link.
+
+* `zabbix_mac_download_link`: The download url to the `pkg` file.
+
 ## Docker Variables
 
 When you don't want to install the Zabbix Agent on the host, but would like to run it in a container then these properties are useful. When `zabbix_agent_docker` is set to `True`, then a
-Docker image will be downloaded and a Container will be started. No other installations will be done on the host, with the excetion of the PSK file and the "Zabbix Include Directory".
+Docker image will be downloaded and a Container will be started. No other installations will be done on the host, with the exception of the PSK file and the "Zabbix Include Directory".
 
 The following directories are mounted in the Container:
 
@@ -329,7 +364,7 @@ The following directories are mounted in the Container:
   - /var/run:/var/run
 ```
 
-Keep in mind that using the Zabbix Agent in a Container, requires changes to the Zabbix Template for Linux as `/proc`, `/sys` and `/etc` are mounted in a directory `/hostfs`.
+Keep in mind that using the Zabbix Agent in a Container requires changes to the Zabbix Template for Linux as `/proc`, `/sys` and `/etc` are mounted in a directory `/hostfs`.
 
 * `zabbix_agent_docker`: When set to `True`, it will install a Docker container on the target host instead of installation on the target. Default: `False`
 
@@ -368,6 +403,19 @@ Keep in mind that using the Zabbix Agent in a Container, requires changes to the
 * `zabbix_agent_firewalld_enable`: If firewalld needs to be updated by opening an TCP port for port configured in `zabbix_agent_listenport` and `zabbix_agent_jmx_listenport` if defined.
 
 * `zabbix_agent_firewalld_source`: When provided, firewalld will be configuring to only allow traffic for IP configured in `zabbix_agent_server`.
+
+* `zabbix_agent_firewalld_zone`: When provided, the firewalld rule will be attached to this zone (only if zabbix_agent_firewalld_enable is set to true). The default behavior is to use the default zone define by the remote host firewalld configuration.
+
+* `zabbix_agent_firewall_action`: When to `insert` the rule or to `append` to IPTables. Default: `insert`.
+
+* `zabbix_agent_firewall_chain`: Which `chain` to add the rule to IPTables. Default `INPUT`
+
+## proxy
+
+When the target host does not have access to the internet, but you do have a proxy available then the following properties needs to be set to download the packages via the proxy:
+
+* `zabbix_http_proxy`
+* `zabbix_https_proxy`
 
 # Dependencies
 
@@ -513,8 +561,8 @@ The 3rd and last scenario is the `before-last-version`. This is the same scenari
 
 The following steps are required to install custom userparameters and/or scripts:
 
-* Put the desired userparameter file in the `templates/userparameters` directory and name it as `<userparameter_name>.j2`. For example: `templates/userparameters/mysql.j2`
-* Put the scripts directory (if any) in the `files/scripts` directory. For example: `files/scripts/mysql`
+* Put the desired userparameter file in the `templates/userparameters` directory and name it as `<userparameter_name>.j2`. For example: `templates/userparameters/mysql.j2`. You can change the default directory to a custom one modifying `zabbix_agent_userparameters_templates_src` variable.
+* Put the scripts directory (if any) in the `files/scripts` directory. For example: `files/scripts/mysql`. You can change the default directory to a custom one modifying `zabbix_agent_userparameters_scripts_src` variable.
 * Add `zabbix_agent_userparameters` variable to the playbook as a list of dictionaries and define userparameter name and scripts directory name (if there are no scripts just no not specify the `scripts_dir` variable).
 
 Example:

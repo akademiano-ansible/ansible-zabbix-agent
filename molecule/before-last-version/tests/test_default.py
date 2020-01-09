@@ -44,7 +44,7 @@ def test_zabbix_include_dir(host):
     zabbixagent = host.file("/etc/zabbix/zabbix_agentd.d")
     assert zabbixagent.is_directory
     assert zabbixagent.user == "root"
-    assert zabbixagent.group == "root"
+    assert zabbixagent.group == "zabbix"
 
 
 def test_socket(host):
@@ -61,6 +61,6 @@ def test_zabbix_package(host, zabbix_packages):
     assert zabbixagent.is_installed
 
     if host.system_info.distribution == 'debian':
-        assert zabbixagent.version.startswith("1:4.0")
+        assert zabbixagent.version.startswith("1:4.2")
     if host.system_info.distribution == 'centos':
-        assert zabbixagent.version.startswith("4.0")
+        assert zabbixagent.version.startswith("4.2")

@@ -19,6 +19,13 @@
     - ansible_distribution == "Amazon"
     - ansible_distribution_major_version == "NA"
 
+- name: "RedHat | Set zabbix_agent_distribution_major_version to 6 when Major Version is 2018.03"
+  set_fact:
+    zabbix_agent_distribution_major_version: 6
+  when:
+    - ansible_distribution == "Amazon"
+    - ansible_distribution_major_version == "2018"
+
 - name: "RedHat | Set zabbix_agent_distribution_major_version to 7 when Amazon 2"
   set_fact:
     zabbix_agent_distribution_major_version: 7
@@ -65,6 +72,9 @@
       - "{{ zabbix_sender_package }}"
       - "{{ zabbix_get_package }}"
     state: "{{ zabbix_agent_package_state }}"
+  environment:
+    http_proxy: "{{ zabbix_http_proxy | default(None) | default(omit) }}"
+    https_proxy: "{{ zabbix_https_proxy | default(None) | default(omit) }}"
   register: zabbix_agent_package_installed
   until: zabbix_agent_package_installed is succeeded
   become: yes
@@ -76,7 +86,37 @@
   package:
     name: policycoreutils-python
     state: installed
+  environment:
+    http_proxy: "{{ zabbix_http_proxy | default(None) | default(omit) }}"
+    https_proxy: "{{ zabbix_https_proxy | default(None) | default(omit) }}"
   register: zabbix_agent_policycoreutils_installed
+  until: zabbix_agent_package_installed is succeeded
+  when: (zabbix_selinux | bool) and (zabbix_agent_distribution_major_version == "6" or zabbix_agent_distribution_major_version == "7")
+  become: yes
+  tags:
+    - init
+    - zabbix-agent
+
+- name: "Install python3-policycoreutils on RHEL8"
+  package:
+    name: python3-policycoreutils
+    state: installed
+  environment:
+    http_proxy: "{{ zabbix_http_proxy | default(None) | default(omit) }}"
+    https_proxy: "{{ zabbix_https_proxy | default(None) | default(omit) }}"
+  register: zabbix_agent_policycoreutils_installed
+  until: zabbix_agent_package_installed is succeeded
+  when: (zabbix_selinux | bool) and ansible_distribution_major_version == "8"
+  become: yes
+  tags:
+    - init
+    - zabbix-agent
+
+- name: "Install selinux-policy-targeted"
+  package:
+    name: selinux-policy-targeted
+    state: installed
+  register: zabbix_agent_selinuxpolicytargeted_installed
   until: zabbix_agent_package_installed is succeeded
   when: zabbix_selinux | bool
   become: yes
