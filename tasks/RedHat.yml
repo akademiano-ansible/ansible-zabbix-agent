@@ -39,6 +39,12 @@
   when:
     - ansible_distribution == "Fedora"
 
+- name: "XCP-ng | Override zabbix_agent_distribution_major_version for XCP-ng"
+  set_fact:
+    zabbix_agent_distribution_major_version: 7
+  when:
+    - ansible_distribution == "XCP-ng"
+
 - name: "RedHat | Install basic repo file"
   yum_repository:
     name: "{{ item.name }}"
@@ -48,6 +54,7 @@
     gpgkey: "{{ item.gpgkey }}"
     priority: "{{ item.priority | default('99') }}"
     state: "{{ item.state | default('present') }}"
+    proxy: "{{ zabbix_http_proxy | default(omit) }}"
   with_items: "{{ zabbix_repo_yum }}"
   register: yum_repo_installed
   become: yes
@@ -90,7 +97,7 @@
     http_proxy: "{{ zabbix_http_proxy | default(None) | default(omit) }}"
     https_proxy: "{{ zabbix_https_proxy | default(None) | default(omit) }}"
   register: zabbix_agent_policycoreutils_installed
-  until: zabbix_agent_package_installed is succeeded
+  until: zabbix_agent_policycoreutils_installed is succeeded
   when: (zabbix_selinux | bool) and (zabbix_agent_distribution_major_version == "6" or zabbix_agent_distribution_major_version == "7")
   become: yes
   tags:
@@ -105,7 +112,7 @@
     http_proxy: "{{ zabbix_http_proxy | default(None) | default(omit) }}"
     https_proxy: "{{ zabbix_https_proxy | default(None) | default(omit) }}"
   register: zabbix_agent_policycoreutils_installed
-  until: zabbix_agent_package_installed is succeeded
+  until: zabbix_agent_policycoreutils_installed is succeeded
   when: (zabbix_selinux | bool) and ansible_distribution_major_version == "8"
   become: yes
   tags:
@@ -117,7 +124,7 @@
     name: selinux-policy-targeted
     state: installed
   register: zabbix_agent_selinuxpolicytargeted_installed
-  until: zabbix_agent_package_installed is succeeded
+  until: zabbix_agent_selinuxpolicytargeted_installed is succeeded
   when: zabbix_selinux | bool
   become: yes
   tags:
@@ -134,3 +141,13 @@
     - zabbix-agent
     - init
     - service
+
+- name: "Allow zabbix to run sudo commands (SELinux)"
+  seboolean:
+    name: zabbix_run_sudo
+    persistent: yes
+    state: yes
+  when:
+    - ansible_selinux.status == "enabled"
+    - selinux_allow_zabbix_run_sudo|bool
+  tags: selinux

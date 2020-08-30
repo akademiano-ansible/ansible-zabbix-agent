@@ -14,6 +14,12 @@
   when:
     - ansible_os_family == "Linuxmint"
 
+- name: "Fix facts for XCP-ng - family"
+  set_fact:
+    zabbix_agent_os_family: RedHat
+  when:
+    - ansible_os_family == "XCP-ng"
+
 - name: "Include OS-specific variables"
   include_vars: "{{ zabbix_agent_os_family }}.yml"
   tags:
@@ -37,6 +43,7 @@
 #  register: zabbix_python_netaddr_package_installed
 #  until: zabbix_python_netaddr_package_installed is succeeded
 #  delegate_to: localhost
+#  run_once: True
 #  become: "{{ zabbix_agent_become_on_localhost }}"
 #  when:
 #    - zabbix_install_pip_packages | bool
@@ -71,6 +78,7 @@
 #  register: zabbix_api_package_installed
 #  until: zabbix_api_package_installed is succeeded
 #  delegate_to: localhost
+#  run_once: True
 #  become: "{{ zabbix_agent_become_on_localhost }}"
 #  when:
 #    - zabbix_install_pip_packages | bool
@@ -119,6 +127,12 @@
     tls_accept: "{{ zabbix_agent_tls_config[zabbix_agent_tlsaccept if zabbix_agent_tlsaccept else 'unencrypted'] }}"
     tls_connect: "{{ zabbix_agent_tls_config[zabbix_agent_tlsconnect if zabbix_agent_tlsconnect else 'unencrypted'] }}"
     validate_certs: "{{ zabbix_validate_certs | default(omit) }}"
+    description: "{{ zabbix_agent_description | default(omit) }}"
+    inventory_zabbix: "{{ zabbix_agent_inventory_zabbix | default({}) }}"
+    ipmi_authtype: "{{ zabbix_agent_ipmi_authtype | default(omit) }}"
+    ipmi_password: "{{ zabbix_agent_ipmi_password| default(omit) }}"
+    ipmi_privilege: "{{ zabbix_agent_ipmi_privilege | default(omit) }}"
+    ipmi_username: "{{ zabbix_agent_ipmi_username | default(omit) }}"
   when:
     - zabbix_api_create_hosts | bool
   register: zabbix_api_host_created

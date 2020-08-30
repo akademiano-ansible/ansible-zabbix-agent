@@ -43,10 +43,17 @@ provisioner:
     name: ansible-lint
   inventory:
     host_vars:
+      zabbix-agent-ubuntu-bionic:
+        ansible_python_interpreter: /usr/bin/python3
+      zabbix-agent-debian-stretch:
+        ansible_python_interpreter: /usr/bin/python
+        zabbix_agent_apt_priority: 600
       zabbix-agent-fedora:
         ansible_python_interpreter: /usr/bin/python3
     group_vars:
       all:
+        zabbix_agent_src_reinstall: False
+        zabbix_install_pip_packages: False
         zabbix_agent_server: 192.168.3.33
         zabbix_agent_serveractive: 192.168.3.33
         zabbix_agent_listenip: 0.0.0.0

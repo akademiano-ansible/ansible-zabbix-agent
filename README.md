@@ -40,22 +40,10 @@ Table of Contents
 - [License](#license)
 - [Author Information](#author-information)
 
-Badges:
-
-[![Build Status](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent.svg?branch=master)](https://travis-ci.org/dj-wasabi/ansible-zabbix-agent) <img src="https://img.shields.io/ansible/role/d/2079"/> <img src="https://img.shields.io/ansible/quality/2079"/>
-
 # Introduction
 
-This is a role for installing and maintaining the zabbix-agent. It will install the Zabbix Agent on any host with an operating system that is defined [here](#operating-systems) or
-will install a Docker container and start that.
-
-This is one of the 'dj-wasabi' roles which configure your whole Zabbix environment. See the complete list:
-
- * zabbix-server (https://galaxy.ansible.com/dj-wasabi/zabbix-server/)
- * zabbix-web (https://galaxy.ansible.com/dj-wasabi/zabbix-web/)
- * zabbix-proxy (https://galaxy.ansible.com/dj-wasabi/zabbix-proxy/)
- * zabbix-javagateway (https://galaxy.ansible.com/dj-wasabi/zabbix-javagateway/)
- * zabbix-agent (https://galaxy.ansible.com/dj-wasabi/zabbix-agent/)
+This role is migrated to: https://github.com/ansible-collections/community.zabbix/
+In this repository, a read only version is/will be available for those who can not make use of collections (yet). Changes/updates will only be applied to the collection and not in this repository.
 
 # Requirements
 ## Operating systems
@@ -180,11 +168,11 @@ This will install the zabbix-agent role into your `roles` directory.
 
 In order to get the Zabbix Agent running, you'll have to define the following properties before executing the role:
 
-* zabbix_version
+* zabbix_agent_version
 * zabbix_agent_server
 * zabbix_agent_serveractive (When using active checks)
 
-The `zabbix_version` is optional. The latest available major.minor version of Zabbix will be installed on the host(s). If you want to use an older version, please specify this in the major.minor format. Example: `zabbix_version: 4.0`, `zabbix_version: 3.4` or `zabbix_version: 2.2`.
+The `zabbix_agent_version` is optional. The latest available major.minor version of Zabbix will be installed on the host(s). If you want to use an older version, please specify this in the major.minor format. Example: `zabbix_agent_version: 4.0`, `zabbix_agent_version: 3.4` or `zabbix_agent_version: 2.2`.
 
 The `zabbix_agent_server` (and `zabbix_agent_serveractive`) should contain the ip or fqdn of the host running the Zabbix Server.
 
@@ -202,7 +190,7 @@ There are some variables in default/main.yml which can (or need to) be overridde
 
 * `zabbix_agent_serveractive`: The ip address for the zabbix-server or zabbix-proxy for active checks.
 
-* `zabbix_version`: This is the version of zabbix. Default it is 4.0, but can be overridden to one of the versions mentioned in [Zabbix Versions](#zabbix-versions).
+* `zabbix_agent_version`: This is the version of zabbix. Default it is 4.4, but can be overridden to one of the versions mentioned in [Zabbix Versions](#zabbix-versions). Previously the variable `zabbix_version` was used directly but it could cause [some inconvenience](https://github.com/dj-wasabi/ansible-zabbix-agent/pull/303). That variable is maintained by retrocompativility.
 
 * `zabbix_repo`: Default: _zabbix_
   * _epel_ install agent from EPEL repo
@@ -238,6 +226,8 @@ There are some variables in default/main.yml which can (or need to) be overridde
 * `zabbix_agent_become_on_localhost`: Set to `False` if you don't need to elevate privileges on localhost to install packages locally with pip. Default: True
 
 * `zabbix_install_pip_packages`: Set to `False` if you don't want to install the required pip packages. Useful when you control your environment completely. Default: True
+
+* `zabbix_agent_apt_priority`: Add a weight (`Pin-Priority`) for the APT repository.
 
 ## TLS Specific configuration
 
@@ -409,6 +399,20 @@ Keep in mind that using the Zabbix Agent in a Container requires changes to the 
 * `zabbix_agent_firewall_action`: When to `insert` the rule or to `append` to IPTables. Default: `insert`.
 
 * `zabbix_agent_firewall_chain`: Which `chain` to add the rule to IPTables. Default `INPUT`
+
+* `zabbix_agent_description`: Description of the host in Zabbix.
+
+* `zabbix_agent_inventory_zabbix`: Adds Facts for a zabbix inventory
+
+## IPMI variables
+
+* `zabbix_agent_ipmi_authtype`: IPMI authentication algorithm. Possible values are 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM), with 2 being the API default.
+
+* `zabbix_agent_ipmi_password`: IPMI password.
+
+* `zabbix_agent_ipmi_privilege`: IPMI privilege level. Possible values are 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM), with 2 being the API default.
+
+* `zabbix_agent_ipmi_username`: IPMI username.
 
 ## proxy
 

@@ -4,7 +4,43 @@ Below an overview of all changes in the releases.
 
 Version (Release date)
 
-UNRELEASED:
+FINAL and LAST release for this role in this repository. This role will be transferred to: https://github.com/ansible-collections/community.zabbix/
+
+2.3.0  (2020-05-05)
+
+  * Prevent to run multiple time installation on localhost #334 (By pull request: SimBou (Thanks!))
+  * Add support for XCP-ng as a dialect of RHEL7 #335 (By pull request: KurtSchluss (Thanks!))
+  * Fix: Changed apt state to present from installed. #336 (By pull request: sebedh (Thanks!))
+  * Selinux boolean to allow zabbix to run sudo commands #340 (By pull request: Vinclame (Thanks!))
+  * Added performance userparameter.yml on Windows #342 (By pull request: ComradeAx0n (Thanks!))
+  * Added some missing ubuntu ids #344
+
+2.2.0  (2020-03-07)
+
+  * Add weight for apt #333
+  * Added property zabbix_agent_src_reinstall so it will succeed the idem… #332
+  * Set the correct until which had a wrong value #330
+  * Partly reverting change for Debian #329
+  * Added debian #327
+  * Reorder task based on issue #326
+  * Removing deprication warnings #325
+  * Removed the as it will add a proxy line that blocks everything #324
+  * adding empty dict to zabbix_agent_inventory_zabbix #323 (By pull request: tobiasehlert (Thanks!))
+  * setting value for zabbix_agent_ipmi_authtype and zabbix_agent_ipmi_privilege #319 (By pull request: tobiasehlert (Thanks!))
+  * Preventing of adding empty ListenIP= to the config file #318 (By pull request: ddyugaev (Thanks!))
+  * Use proxy if defined (Windows) #316 (By pull request: lingfish (Thanks!))
+  * RedHat proxy set in repo file #315 (By pull request: lingfish (Thanks!))
+  * Windows agent download link fix #313 (By pull request: ddyugaev (Thanks!))
+  * Apply proxy settings when installing deb-src repositories #312 (By pull request: KurtSchluss (Thanks!))
+  * added additional zabbix_host parameter #307 (By pull request: pugnacity (Thanks!))
+  * fix check mode on Windows #305 (By pull request: Poil (Thanks!))
+  * Move up task 'Override architecture if 64-bit' #304 (By pull request: Gati0 (Thanks!))
+  * Avoid conflicts with the zabbix_version and zabbix_url variables #303 (By pull request: santiagomr (Thanks!))
+  * Fix incorrect handler names #299 (By pull request: gunnarbeutner (Thanks!))
+  * Implement support for macOS #298 (By pull request: gunnarbeutner (Thanks!))
+  * Improving readability and avoiding repeated code #296 (By pull request: santiagomr (Thanks!))
+  * 'Template OS Linux' doesn't exist in Zabbix 4.4 #295
+  * Add follow_redirects for download Windows-Agent on Windows #294 (By pull request: Gati0 (Thanks!))
 
 2.1.0  (2019-11-25)
 
